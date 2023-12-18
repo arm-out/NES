@@ -2,12 +2,14 @@ pub mod bus;
 pub mod cartridge;
 pub mod cpu;
 pub mod opcodes;
+pub mod trace;
 
 use bus::Bus;
 use cartridge::Rom;
 use cpu::Mem;
 use cpu::CPU;
 use rand::Rng;
+use trace::trace;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
