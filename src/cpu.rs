@@ -45,7 +45,7 @@ pub enum AddressingMode {
     NoneAddressing,
 }
 
-trait Mem {
+pub trait Mem {
     fn mem_read(&self, address: u16) -> u8;
 
     fn mem_write(&mut self, address: u16, data: u8);
@@ -100,18 +100,27 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        let mut address = 0x8000;
+        let mut address = 0x0600;
         for byte in program {
             self.mem_write(address, byte);
             address += 1;
         }
-        self.mem_write_u16(0xFFFC, 0x8000)
+        self.mem_write_u16(0xFFFC, 0x0600)
     }
 
     pub fn run(&mut self) {
+        self.run_with_callback(|_| {})
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F)
+    where
+        F: FnMut(&mut CPU),
+    {
         let ref opcodes = *opcodes::OPCODES_MAP;
 
         loop {
+            callback(self);
+
             let code = self.mem_read(self.program_counter);
             self.program_counter += 1;
             let program_counter_state = self.program_counter;
