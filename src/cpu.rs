@@ -552,8 +552,6 @@ impl CPU {
         self.status.remove(CpuFlags::CARRY)
     }
 
-    /// note: ignoring decimal mode
-    /// http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
     fn add_to_register_a(&mut self, data: u8) {
         let sum = self.register_a as u16
             + data as u16
