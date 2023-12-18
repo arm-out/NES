@@ -40,7 +40,8 @@ impl Mem for Bus {
 
             PPU_REGISTERS..=PPU_REGISTERS_MIRROR_END => {
                 let mirr_addr = addr & 0b00100000_00000111;
-                todo!("Read from PPU registers: {:#X}", mirr_addr)
+                // todo!("Read from PPU registers: {:#X}", mirr_addr)
+                0
             }
 
             PRG_ROM_START..=PRG_ROM_END => self.read_prg_rom(addr),
@@ -61,7 +62,7 @@ impl Mem for Bus {
 
             PPU_REGISTERS..=PPU_REGISTERS_MIRROR_END => {
                 let mirr_addr = addr & 0b00100000_00000111;
-                todo!("Read from PPU registers: {:#X}", mirr_addr)
+                // todo!("Read from PPU registers: {:#X}", mirr_addr)
             }
 
             PRG_ROM_START..=PRG_ROM_END => {

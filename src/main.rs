@@ -45,24 +45,27 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     // load game
-    let bytes = std::fs::read("roms/snake.nes").unwrap();
+    let bytes = std::fs::read("roms/nestest.nes").unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
     let bus = Bus::new(rom);
     let mut cpu = cpu::CPU::new(bus);
     cpu.reset();
+    cpu.program_counter = 0xC000;
 
     cpu.run_with_callback(move |cpu| {
-        handle_user_input(cpu, &mut event_pump);
-        cpu.mem_write(0xfe, rng.gen_range(1..16));
+        println!("{}", trace(cpu));
 
-        if read_screen_state(cpu, &mut screen_state) {
-            texture.update(None, &screen_state, 32 * 3).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-            canvas.present();
-        }
+        // handle_user_input(cpu, &mut event_pump);
+        // cpu.mem_write(0xfe, rng.gen_range(1..16));
 
-        ::std::thread::sleep(std::time::Duration::new(0, 70_000));
+        // if read_screen_state(cpu, &mut screen_state) {
+        //     texture.update(None, &screen_state, 32 * 3).unwrap();
+        //     canvas.copy(&texture, None, None).unwrap();
+        //     canvas.present();
+        // }
+
+        // ::std::thread::sleep(std::time::Duration::new(0, 70_000));
     });
 }
 
