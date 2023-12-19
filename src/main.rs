@@ -1,15 +1,20 @@
 pub mod bus;
 pub mod cartridge;
 pub mod cpu;
+pub mod joypad;
 pub mod opcodes;
 pub mod ppu;
 pub mod render;
 pub mod trace;
 
+use std::collections::HashMap;
+
 use bus::Bus;
 use cartridge::Rom;
 use cpu::Mem;
 use cpu::CPU;
+use joypad::Joypad;
+use joypad::JoypadButtons;
 use ppu::NesPPU;
 use render::frame::Frame;
 use render::palette;
@@ -48,10 +53,11 @@ fn main() {
     // load game
     let bytes = std::fs::read("roms/games/pacman.nes").unwrap();
     let rom = Rom::new(&bytes).unwrap();
+    let keymap = get_jp1_keymap();
 
     // Run game
     let mut frame = Frame::new();
-    let bus = Bus::new(rom, move |ppu: &NesPPU| {
+    let bus = Bus::new(rom, move |ppu: &NesPPU, joypad: &mut Joypad| {
         render::render(ppu, &mut frame);
         texture.update(None, &frame.data, 256 * 3).unwrap();
         canvas.copy(&texture, None, None).unwrap();
@@ -64,6 +70,17 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => std::process::exit(0),
+
+                Event::KeyDown { keycode, .. } => {
+                    if let Some(key) = keymap.get(&keycode.unwrap_or(Keycode::Ampersand)) {
+                        joypad.set_button_pressed_status(*key, true);
+                    }
+                }
+                Event::KeyUp { keycode, .. } => {
+                    if let Some(key) = keymap.get(&keycode.unwrap_or(Keycode::Ampersand)) {
+                        joypad.set_button_pressed_status(*key, false);
+                    }
+                }
                 _ => { /* do nothing */ }
             }
         }
@@ -73,6 +90,20 @@ fn main() {
 
     cpu.reset();
     cpu.run();
+}
+
+fn get_jp1_keymap() -> HashMap<Keycode, JoypadButtons> {
+    let mut key_map = HashMap::new();
+    key_map.insert(Keycode::W, JoypadButtons::Up);
+    key_map.insert(Keycode::S, JoypadButtons::Down);
+    key_map.insert(Keycode::A, JoypadButtons::Left);
+    key_map.insert(Keycode::D, JoypadButtons::Right);
+    key_map.insert(Keycode::Space, JoypadButtons::Select);
+    key_map.insert(Keycode::Return, JoypadButtons::Start);
+    key_map.insert(Keycode::J, JoypadButtons::ButtonA);
+    key_map.insert(Keycode::K, JoypadButtons::ButtonB);
+
+    key_map
 }
 
 fn show_tile_bank(chr_rom: &Vec<u8>, bank: usize) -> Frame {
