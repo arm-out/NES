@@ -24,7 +24,7 @@ bitflags! {
         const BgPatternTable        = 0b00010000;
         const SpriteSize            = 0b00100000;
         const MasterSlave           = 0b01000000;
-        const Nmi                   = 0b10000000;
+        const NMI                   = 0b10000000;
     }
 }
 
@@ -33,12 +33,58 @@ impl CtrlRegister {
         Self::from_bits_truncate(0b00000000)
     }
 
+    pub fn nametable_addr(&self) -> u16 {
+        match self.bits() & 0b11 {
+            0 => 0x2000,
+            1 => 0x2400,
+            2 => 0x2800,
+            3 => 0x2c00,
+            _ => panic!("not possible"),
+        }
+    }
+
     pub fn vram_addr_increment(&self) -> u8 {
-        if self.contains(CtrlRegister::VramInc) {
+        if !self.contains(CtrlRegister::VramInc) {
+            1
+        } else {
             32
+        }
+    }
+
+    pub fn sprt_pattern_addr(&self) -> u16 {
+        if !self.contains(CtrlRegister::SpritePatternTable) {
+            0
+        } else {
+            0x1000
+        }
+    }
+
+    pub fn bknd_pattern_addr(&self) -> u16 {
+        if !self.contains(CtrlRegister::BgPatternTable) {
+            0
+        } else {
+            0x1000
+        }
+    }
+
+    pub fn sprite_size(&self) -> u8 {
+        if !self.contains(CtrlRegister::SpriteSize) {
+            8
+        } else {
+            16
+        }
+    }
+
+    pub fn master_slave_select(&self) -> u8 {
+        if !self.contains(CtrlRegister::SpriteSize) {
+            0
         } else {
             1
         }
+    }
+
+    pub fn generate_vblank_nmi(&self) -> bool {
+        return self.contains(CtrlRegister::NMI);
     }
 
     pub fn update(&mut self, data: u8) {
@@ -49,6 +95,6 @@ impl CtrlRegister {
         self.set(CtrlRegister::BgPatternTable, data & 0b00010000 != 0);
         self.set(CtrlRegister::SpriteSize, data & 0b00100000 != 0);
         self.set(CtrlRegister::MasterSlave, data & 0b01000000 != 0);
-        self.set(CtrlRegister::Nmi, data & 0b10000000 != 0);
+        self.set(CtrlRegister::NMI, data & 0b10000000 != 0);
     }
 }
