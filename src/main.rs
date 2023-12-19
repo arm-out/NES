@@ -10,6 +10,7 @@ use bus::Bus;
 use cartridge::Rom;
 use cpu::Mem;
 use cpu::CPU;
+use ppu::NesPPU;
 use render::frame::Frame;
 use render::palette;
 use trace::trace;
@@ -48,13 +49,14 @@ fn main() {
     let bytes = std::fs::read("roms/games/pacman.nes").unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
-    let right_bank = show_tile_bank(&rom.chr_rom, 0);
+    // Run game
+    let mut frame = Frame::new();
+    let bus = Bus::new(rom, move |ppu: &NesPPU| {
+        render::render(ppu, &mut frame);
+        texture.update(None, &frame.data, 256 * 3).unwrap();
+        canvas.copy(&texture, None, None).unwrap();
+        canvas.present();
 
-    texture.update(None, &right_bank.data, 256 * 3).unwrap();
-    canvas.copy(&texture, None, None).unwrap();
-    canvas.present();
-
-    loop {
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -65,27 +67,12 @@ fn main() {
                 _ => { /* do nothing */ }
             }
         }
-    }
+    });
 
-    // let bus = Bus::new(rom);
-    // let mut cpu = cpu::CPU::new(bus);
-    // cpu.reset();
-    // cpu.program_counter = 0xC000;
+    let mut cpu = CPU::new(bus);
 
-    // cpu.run_with_callback(move |cpu| {
-    //     println!("{}", trace(cpu));
-
-    //     // handle_user_input(cpu, &mut event_pump);
-    //     // cpu.mem_write(0xfe, rng.gen_range(1..16));
-
-    //     // if read_screen_state(cpu, &mut screen_state) {
-    //     //     texture.update(None, &screen_state, 32 * 3).unwrap();
-    //     //     canvas.copy(&texture, None, None).unwrap();
-    //     //     canvas.present();
-    //     // }
-
-    //     // ::std::thread::sleep(std::time::Duration::new(0, 70_000));
-    // });
+    cpu.reset();
+    cpu.run();
 }
 
 fn show_tile_bank(chr_rom: &Vec<u8>, bank: usize) -> Frame {
@@ -112,10 +99,10 @@ fn show_tile_bank(chr_rom: &Vec<u8>, bank: usize) -> Frame {
                 upper = upper >> 1;
                 lower = lower >> 1;
                 let rgb = match value {
-                    0 => palette::SYSTEM_PALLETE[0x01],
-                    1 => palette::SYSTEM_PALLETE[0x23],
-                    2 => palette::SYSTEM_PALLETE[0x27],
-                    3 => palette::SYSTEM_PALLETE[0x30],
+                    0 => palette::SYSTEM_PALETE[0x01],
+                    1 => palette::SYSTEM_PALETE[0x23],
+                    2 => palette::SYSTEM_PALETE[0x27],
+                    3 => palette::SYSTEM_PALETE[0x30],
                     _ => panic!("can't be"),
                 };
                 frame.set_pixel(tile_x + x, tile_y + y, rgb)
